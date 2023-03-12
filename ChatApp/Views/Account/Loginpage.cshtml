@@ -1,0 +1,61 @@
+﻿@using ChatApp.Models.ViewModels;
+@model loginViewModel
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login page</title>
+    <link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Rubik:400,700'>
+    <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/login/style.css">
+
+</head>
+<body>
+    <!-- partial:index.partial.html -->
+    <div class="login-form">
+        <form action="/Login" method="post" id="loginform">
+            <div asp-validation-summary="ModelOnly"></div>
+            <h1>Login</h1>
+            <div class="content">
+                <div class="input-field">
+                    <input type="email" placeholder="Email" asp-for="Email" autocomplete="on">
+                </div>
+                <div class="input-field">
+                    <input type="password" placeholder="Password" asp-for="Password">
+                </div>
+            </div>
+            <div class="">
+                <div class="d-grid gap-2">
+                    <input type="submit" value="Login" class="btn btn-success btn-block" />
+                </div>
+            </div>
+        </form>
+    </div>
+    <!-- partial -->
+    <!-- partial:index.partial.html -->
+    <div class="login-form">
+        <form asp-controller="Account" asp-action="Register" method="post">
+            <h1>Register</h1>
+            <div class="content">
+                <div class="input-field">
+                    <input type="email" placeholder="Email" asp-for="Email" autocomplete="on">
+                </div>
+                <div class="input-field">
+                    <input type="password" placeholder="Password" asp-for="Password">
+                </div>
+            </div>
+            <div class="">
+                <div class="d-grid gap-2">
+                    <input type="submit" value="Register" class="btn btn-info" />
+                </div>
+            </div>
+        </form>
+    </div>
+    <!-- partial -->
+
+</body>
+</html>

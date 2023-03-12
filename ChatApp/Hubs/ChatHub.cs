@@ -1,62 +1,99 @@
 ﻿using ChatApp.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace ChatApp.Hubs;
-
+[Authorize]
 public class ChatHub : Hub
 {
-    public static List<User> users = new List<User>();
-    public override Task OnConnectedAsync()
+    private readonly ApplicationDbContext _context;
+    public ChatHub(ApplicationDbContext context)
     {
-        if (!UserExists("saeed@gmail.com"))
-        {
-            users.Add(new User { Email = "saeed@gmail.com", ConnectionId = GetConnectionId() });
-        }
-        return base.OnConnectedAsync();
-    }
-    public async Task SendMessage(string user, string message)
-    {
-        await Clients.All.SendAsync("ReceiveMessage", user, message);
+        _context = context;
     }
 
-    public async Task SendToUser( string receiverConnectionId, string message)
+    #region Override functions
+    public override Task OnConnectedAsync()
     {
-        await Clients.Client(receiverConnectionId).SendAsync("ReceiveMessage", message);
-        await Task.CompletedTask;
-    }
-    public string RegisterUser(string username)
-    {
-        if (!users.Any(u => u.Email == username))
+        _context.UsersConnectionIds.Add(new UsersConnectionId()
         {
-            var user2 = new User()
+            UserId = int.Parse(Context.UserIdentifier),
+            ConnectionId = Context.ConnectionId,
+        });
+        var obj = _context.Users.Find(int.Parse(Context.UserIdentifier));
+        obj.UserStatus = "Online";
+        _context.Users.Update(obj);
+        _context.SaveChanges();
+        return base.OnConnectedAsync();
+    }
+    public override Task OnDisconnectedAsync(Exception? exception)
+    {
+        var obj = _context.Users.Find(int.Parse(Context.UserIdentifier));
+        obj.UserStatus = "Offline";
+        _context.Users.Update(obj);
+        _context.SaveChanges();
+        return base.OnDisconnectedAsync(exception);
+    }
+    #endregion
+
+    //public async Task SendMessage(string user, string message)
+    //{
+    //    await Clients.All.SendAsync("ReceiveMessage", user, message);
+    //}
+
+    public async Task SendToUser(string receiverConnectionId, string messageServer)
+    {
+        var getUID = _context.UsersConnectionIds.Single(u => u.ConnectionId == receiverConnectionId).UserId;
+        var getUName = _context.UsersConnectionIds.Include(u => u.User).Single(u => u.ConnectionId == receiverConnectionId).User.Email;
+        if (ReciverIsOnline(receiverConnectionId))
+        {
+            await _context.Chats.AddAsync(new Chat()
             {
-                ConnectionId = GetConnectionId(),
-                Email = "ali@gmail.com",
-            };
-            users.Add(user2);
-            return user2.ConnectionId;
+                UserId = int.Parse(Context.UserIdentifier!),
+                SendDate = DateTime.Now,
+                Text = messageServer,
+                ReciverId = getUID
+            });
+            await _context.SaveChangesAsync();
+            await Clients.Client(receiverConnectionId).SendAsync("ReceiveMessage", messageServer, DateTime.Now.Date.ToString("dd/MM/yyyy"), getUName);
+
         }
         else
         {
-            return GetUserId(username);
+            await _context.Chats.AddAsync(new Chat()
+            {
+                UserId = int.Parse(Context.UserIdentifier!),
+                SendDate = DateTime.Now,
+                Text = messageServer,
+                ReciverId = getUID
+            });
+            await _context.SaveChangesAsync();
         }
     }
+
     public string GetUserId(string username)
     {
-        var usern = users.ToList();
-        var conId = users.Single(u => u.Email == username).ConnectionId;
-        return conId;
+        var getUID = _context.Users.Single(u => u.Email == username).UserId;
+        string userId = _context.UsersConnectionIds.OrderBy(o => o.ConsId).LastOrDefault(u => u.UserId == getUID).ConnectionId;
+        return userId;
     }
-    static bool UserExists(string email)
+    public string GetCurrentUserId()
     {
-        foreach (var user in users)
-        {
-            if (user.Email == email)
-            {
-                return true;
-            }
-        }
-        return false;
+        string userId = _context.UsersConnectionIds.OrderBy(o => o.ConsId).LastOrDefault(u => u.UserId == int.Parse(Context.UserIdentifier)).ConnectionId;
+        return userId;
     }
-    public string GetConnectionId() => Guid.NewGuid().ToString().Replace("-","");
+    public bool ReciverIsOnline(string id)
+    {
+        string getUStatus = _context.UsersConnectionIds.Include(u => u.User).Single(u => u.ConnectionId == id).User.UserStatus;
+        if (getUStatus == "Online")
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
 }

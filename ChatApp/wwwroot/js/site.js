@@ -5,21 +5,25 @@ var connection = new signalR.HubConnectionBuilder().withUrl("/chatHub").build();
 //Disable send button until connection is established
 document.getElementById("sendToUser").disabled = true;
 
-connection.on("ReceiveMessage", function (message) {
-    console.log(message);
-    var msg = message.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+connection.on("ReceiveMessage", function (messageServer, date, name) {
+    console.log(messageServer);
+    var msg = messageServer.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     var li = `
-             <li class="clearfix">
-        <div class="message-data">
-        <span class="message-data-time">10:12 AM, Today</span>
-        </div>
-        <div class="message my-message">${msg}</div>
-        </li>`;
+        <div class="chat-message-left pb-4">
+                        <div>
+                            <img src="https://bootdey.com/img/Content/avatar/avatar3.png" class="rounded-circle mr-1" alt="${name}" width="40" height="40">
+                            <div class="text-muted small text-nowrap mt-2">${date}</div>
+                        </div>
+                        <div class="flex-shrink-1 bg-light rounded py-2 px-3 ml-3">
+                            <div class="font-weight-bold mb-1">${name}</div>
+                            ${msg}
+                        </div>
+          </div>`;
     $(".messagesList").append(li);
 });
 
 connection.start().then(function () {
-    connection.invoke("RegisterUser", "amir@yahoo.com").then(function (id) {
+    connection.invoke("GetCurrentUserId").then(function (id) {
         document.getElementById("connectionId").innerHTML = id;
     });
     document.getElementById("sendToUser").disabled = false;
@@ -39,28 +43,79 @@ connection.start().then(function () {
 document.getElementById("sendToUser").addEventListener("click", function (event) {
     var receiverConnectionId = document.getElementById("receiverId").value;
     var message = document.getElementById("messageInput").value;
-    connection.invoke("SendToUser", receiverConnectionId, message).catch(function (err) {
-        return console.error(err.toString());
-    });
-    var msg = message.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    var li = `
-     <li class="clearfix">
-                    <div class="message-data text-right">
-                        <span class="message-data-time">10:10 AM, Today</span>
-                        <img src="https://bootdey.com/img/Content/avatar/avatar7.png" alt="avatar">
-                    </div>
-                    <div class="message other-message float-right"> ${msg} </div>
-     </li>`;
-    $(".messagesList").append(li);
+    if (receiverConnectionId === null || receiverConnectionId === "") {
+        alert("select a user!");
+    } else {
+        if (message !== null && message !== "") {
+            connection.invoke("SendToUser", receiverConnectionId, message).catch(function (err) {
+                return console.error(err.toString());
+            });
+            var today = new Date();
+            var dd = String(today.getDate()).padStart(2, '0');
+            var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+            var yyyy = today.getFullYear();
+
+            today = mm + '/' + dd + '/' + yyyy;
+            var msg = message.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            var li = `
+              <div class="chat-message-right mb-4">
+                        <div>
+                            <img src="https://bootdey.com/img/Content/avatar/avatar1.png" class="rounded-circle mr-1" alt="Chris Wood" width="40" height="40">
+                            <div class="text-muted small text-nowrap mt-2">${today}</div>
+                        </div>
+                        <div class="flex-shrink-1 bg-light rounded py-2 px-3 mr-3">
+                            <div class="font-weight-bold mb-1">You</div>
+                            ${msg}
+                        </div>
+               </div>`;
+            $(".messagesList").append(li);
+        } else {
+            alert("Fill input");
+        }
+    }
+
+
+    document.getElementById("messageInput").value = "";
+    document.getElementById("messageInput").focus();
     event.preventDefault();
 });
 
-document.getElementById("userli").addEventListener("click", function (event) {
-    var userfull = document.getElementById("userfullname").innerHTML;
-    connection.invoke("GetUserId",userfull).then((userid) => {
-        document.getElementById("receiverId").value = userid;
-    }).catch(function (err) {
-        return console.error(err.toString());
+
+// Get all the div elements with class 'userClass'
+const liElements = document.querySelectorAll('div.userClass');
+
+// Add a click event listener to each div element
+liElements.forEach((div, index) => {
+    // Set a unique data-id attribute for each div element
+    div.setAttribute('data-id', index);
+
+    div.addEventListener('click', (e) => {
+        // Remove the "current" class from any previously clicked div element
+        const currentLi = document.querySelector('.active');
+        if (currentLi) {
+            currentLi.classList.remove('active');
+        }
+
+        // Add the "current" class to the clicked div element
+        div.classList.add('active');
+
+        // Retrieve the data-id attribute of the clicked div element
+        const id = div.getAttribute('data-id');
+        console.log(`Clicked on div with data-id: ${id}`);
+
+        // Get the <p> element inside the clicked div element
+        const pElement = div.querySelector('span');
+
+        // Get the value of the id attribute of the <span> element
+        const pId = pElement.getAttribute('id');
+        console.log(`The id of the <span> element inside the clicked <li> is: ${pId}`);
+
+        connection.invoke("GetUserId", pId).then((userid) => {
+            document.getElementById("receiverId").value = userid;
+        }).catch(function (err) {
+            return console.error(err.toString());
+        });
+
+        e.preventDefault();
     });
-    event.preventDefault();
 });

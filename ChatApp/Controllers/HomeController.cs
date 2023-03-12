@@ -1,12 +1,22 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using ChatApp.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace ChatApp.Controllers;
 
 public class HomeController : Controller
 {
-
+    private readonly ApplicationDbContext _context;
+    public HomeController(ApplicationDbContext context)
+    {
+        _context = context;
+    }
+    [Authorize]
     public IActionResult Index()
     {
-        return View();
+        var date = _context.Users.ToList();
+        ViewBag.Chat=_context.Chats.Include(u=>u.User).Where(c=>c.User.Email==User.Identity.Name).ToList();
+        return View(date);
     }
 }
