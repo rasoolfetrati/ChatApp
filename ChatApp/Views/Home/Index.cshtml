@@ -5,8 +5,11 @@
 @{
     ViewData["Title"] = "Home Page";
 }
+<form action="/Logout">
+    <input type="submit" class="btn btn-danger" value="logout"/>
+</form>
 <p id="connectionId"></p><span>@User.Identity.Name</span>
-<div class="card">
+<div class="card customeCard">
     <div class="row g-0">
         <div class="col-12 col-lg-5 col-xl-3 border-right">
             <div class="px-4 d-none d-md-block">
@@ -54,39 +57,7 @@
                 </div>
             </div>
             <div class="position-relative">
-                <div class="chat-messages p-4 messagesList">
-                    @{
-                        var data = ViewBag.Chat as List<Chat>;
-                    }
-                    @foreach (var item in data)
-                    {
-                        @if (item.User.Email == User.Identity.Name)
-                        {
-                            <div class="chat-message-right mb-4">
-                                <div>
-                                    <img src="https://bootdey.com/img/Content/avatar/avatar1.png" class="rounded-circle mr-1" alt="Chris Wood" width="40" height="40">
-                                    <div class="text-muted small text-nowrap mt-2">@item.SendDate.Date.ToString("dd/MM/yyyy")</div>
-                                </div>
-                                <div class="flex-shrink-1 bg-light rounded py-2 px-3 mr-3">
-                                    <div class="font-weight-bold mb-1">You</div>
-                                    @item.Text
-                                </div>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="chat-message-left pb-4">
-                                <div>
-                                    <img src="https://bootdey.com/img/Content/avatar/avatar3.png" class="rounded-circle mr-1" alt="Sharon Lessman" width="40" height="40">
-                                    <div class="text-muted small text-nowrap mt-2">@item.SendDate.Date.ToString("dd/MM/yyyy")</div>
-                                </div>
-                                <div class="flex-shrink-1 bg-light rounded py-2 px-3 ml-3">
-                                    <div class="font-weight-bold mb-1">@_userService.GetnameByReciverId(item.ReciverId)</div>
-                                    @item.Text
-                                </div>
-                            </div>
-                        }
-                    }
+                <div class="chat-messages p-4 messagesList" id="chathistory">
                 </div>
             </div>
             <div class="flex-grow-0 py-3 px-4 border-top">

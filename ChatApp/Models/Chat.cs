@@ -13,7 +13,7 @@ namespace ChatApp.Models
         [MaxLength(150)]
         public string Text { get; set; }
         public DateTime SendDate { get; set; }=DateTime.Now;
-
         public User User { get; set; }
+
     }
 }

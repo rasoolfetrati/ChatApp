@@ -6,7 +6,9 @@ body {
 .chat-online {
     color: #34ce57
 }
-
+.customeCard{
+    min-height:80vh;
+}
 .chat-offline {
     color: #e4606d
 }
@@ -15,6 +17,7 @@ body {
     display: flex;
     flex-direction: column;
     max-height: 800px;
+    min-height:60vh;
     overflow-y: scroll
 }
 

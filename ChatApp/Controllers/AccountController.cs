@@ -73,7 +73,7 @@ public class AccountController : Controller
                 {
                     Password = loginViewModel.Password,
                     Email = loginViewModel.Email,
-                    UserStatus="Offline"
+                    UserStatus = "Offline"
                 };
                 await _context.Users.AddAsync(user);
                 await _context.SaveChangesAsync();
@@ -90,6 +90,10 @@ public class AccountController : Controller
     [Route("Logout")]
     public async Task<IActionResult> Logout()
     {
+        var user = await _context.Users.SingleAsync(u => u.Email == User.Identity.Name);
+        user.UserStatus = "Offline";
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync();
         await HttpContext.SignOutAsync();
         return Redirect("/Login");
     }

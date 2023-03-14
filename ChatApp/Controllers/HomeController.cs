@@ -16,7 +16,6 @@ public class HomeController : Controller
     public IActionResult Index()
     {
         var date = _context.Users.ToList();
-        ViewBag.Chat=_context.Chats.Include(u=>u.User).Where(c=>c.User.Email==User.Identity.Name).ToList();
         return View(date);
     }
 }

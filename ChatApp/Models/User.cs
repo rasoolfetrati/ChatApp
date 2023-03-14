@@ -18,5 +18,6 @@ namespace ChatApp.Models
 
         public ICollection<Chat> Chats { get; set; }
         public ICollection<UsersConnectionId> UsersConnectionIds { get; set; }
+        public virtual ICollection<ConversationRoom> Rooms { get; set; }
     }
 }

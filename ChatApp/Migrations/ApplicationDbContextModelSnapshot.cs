@@ -51,6 +51,26 @@ namespace ChatApp.Migrations
                     b.ToTable("Chats");
                 });
 
+            modelBuilder.Entity("ChatApp.Models.ConversationRoom", b =>
+                {
+                    b.Property<string>("RoomName")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("User1")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("User2")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("RoomName");
+
+                    b.ToTable("ConversationRooms");
+                });
+
             modelBuilder.Entity("ChatApp.Models.User", b =>
                 {
                     b.Property<int>("UserId")
@@ -100,6 +120,21 @@ namespace ChatApp.Migrations
                     b.ToTable("UsersConnectionIds");
                 });
 
+            modelBuilder.Entity("ConversationRoomUser", b =>
+                {
+                    b.Property<string>("RoomsRoomName")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("UsersUserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("RoomsRoomName", "UsersUserId");
+
+                    b.HasIndex("UsersUserId");
+
+                    b.ToTable("ConversationRoomUser");
+                });
+
             modelBuilder.Entity("ChatApp.Models.Chat", b =>
                 {
                     b.HasOne("ChatApp.Models.User", "User")
@@ -120,6 +155,21 @@ namespace ChatApp.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ConversationRoomUser", b =>
+                {
+                    b.HasOne("ChatApp.Models.ConversationRoom", null)
+                        .WithMany()
+                        .HasForeignKey("RoomsRoomName")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ChatApp.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UsersUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("ChatApp.Models.User", b =>
