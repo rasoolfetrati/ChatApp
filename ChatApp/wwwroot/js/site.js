@@ -42,11 +42,12 @@ connection.start().then(function () {
 document.getElementById("sendToUser").addEventListener("click", function (event) {
     var receiverConnectionId = document.getElementById("receiverId").value;
     var message = document.getElementById("messageInput").value;
-    if (receiverConnectionId === null || receiverConnectionId === "") {
+    var roomId = $("#chathistory").attr("data-room");
+    if (receiverConnectionId === null || receiverConnectionId === "" || roomId === null || roomId === "") {
         alert("select a user!");
     } else {
         if (message !== null && message !== "") {
-            connection.invoke("SendToUser", receiverConnectionId, message).catch(function (err) {
+            connection.invoke("SendToUser", receiverConnectionId, message, roomId).catch(function (err) {
                 return console.error(err.toString());
             });
             var today = new Date();
@@ -87,7 +88,6 @@ const liElements = document.querySelectorAll('div.userClass');
 liElements.forEach((div, index) => {
     // Set a unique data-id attribute for each div element
     div.setAttribute('data-id', index);
-
     div.addEventListener('click', (e) => {
 
         // Remove the "current" class from any previously clicked div element
@@ -105,11 +105,15 @@ liElements.forEach((div, index) => {
         connection.invoke("GetUserId", pId).then((userid) => {
             document.getElementById("receiverId").value = userid;
         }).then(() => {
+            connection.invoke("GetUsersRoom", pId).then((roomId) => {
+                const innerDiv = document.querySelector("#chathistory");
+                innerDiv.setAttribute("data-room", roomId);
+            })
+        }).then(() => {
             connection.invoke("GetUserMessages", pId).then((listMessages) => {
                 document.getElementById("chathistory").innerHTML = "";
                 var li = ``;
                 listMessages.forEach((item) => {
-                    console.log(item);
                     if (item.isCurrentUser) {
                         li = `
                             <div class="chat-message-right mb-4">

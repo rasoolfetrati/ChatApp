@@ -48,7 +48,7 @@ public class ChatHub : Hub
     //    await Clients.All.SendAsync("ReceiveMessage", user, message);
     //}
 
-    public async Task SendToUser(string receiverConnectionId, string messageServer)
+    public async Task SendToUser(string receiverConnectionId, string messageServer, string roomId)
     {
         var getUID = _context.UsersConnectionIds.FirstOrDefault(u => u.ConnectionId == receiverConnectionId).UserId;
         var getUName = _context.UsersConnectionIds.Include(u => u.User).FirstOrDefault(u => u.ConnectionId == receiverConnectionId).User.Email;
@@ -71,6 +71,8 @@ public class ChatHub : Hub
         }
         if (ReciverIsOnline(receiverConnectionId))
         {
+            await Groups.AddToGroupAsync(receiverConnectionId, roomId);
+            await Groups.AddToGroupAsync(getCurrentUserConnection, roomId);
             await _context.Chats.AddAsync(new Chat()
             {
                 UserId = int.Parse(Context.UserIdentifier!),
@@ -80,9 +82,8 @@ public class ChatHub : Hub
             });
             await _context.SaveChangesAsync();
             string state = GetUserStatus(getUName);
-            //await Groups.AddToGroupAsync(getCurrentUserConnection, getRoom.RoomName);
-            //await Clients.Groups(getRoom.RoomName, getCurrentUserConnection, receiverConnectionId).SendAsync("ReceiveMessage", messageServer, DateTime.Now.Date.ToString("dd/MM/yyyy"), getUName, state);
-            await Clients.Client(receiverConnectionId).SendAsync("ReceiveMessage", messageServer, DateTime.Now.Date.ToString("dd/MM/yyyy"), getUName, state);
+            //await Clients.Group(roomId).SendAsync("ReceiveMessage", messageServer, DateTime.Now.Date.ToString("dd/MM/yyyy"), getCUName, state);
+            await Clients.GroupExcept(roomId, GetUserId(currentUser)).SendAsync("ReceiveMessage", messageServer, DateTime.Now.Date.ToString("dd/MM/yyyy"), getCUName, state);
         }
         else
         {
@@ -122,10 +123,6 @@ public class ChatHub : Hub
     {
         var currentUserConnection = _userService.GetUserConnectionById(int.Parse(Context.UserIdentifier!));
         var currentUser = _userService.GetnameByReciverId(int.Parse(Context.UserIdentifier!));
-        var getRoom = _context.ConversationRooms.FirstOrDefault(c =>
-                       (c.User1 == currentUser && c.User2 == id) ||
-                       (c.User1 == id && c.User2 == currentUser));
-        Groups.AddToGroupAsync(currentUserConnection, getRoom.RoomName);
         List<ChatViewModel> chatViewModels = new List<ChatViewModel>();
         var currentUserId = int.Parse(Context.UserIdentifier!);
         var otherUserId = _context.Users.Single(u => u.Email == id).UserId;
@@ -155,7 +152,14 @@ public class ChatHub : Hub
 
         return chatViewModels;
     }
-
+    public string GetUsersRoom(string id)
+    {
+        var currentUser = _userService.GetnameByReciverId(int.Parse(Context.UserIdentifier!));
+        var getRoom = _context.ConversationRooms.FirstOrDefault(c =>
+                 (c.User1 == currentUser && c.User2 == id) ||
+                 (c.User1 == id && c.User2 == currentUser));
+        return getRoom.RoomName;
+    }
     public bool ReciverIsOnline(string id)
     {
         string getUStatus = _context.UsersConnectionIds.Include(u => u.User).Single(u => u.ConnectionId == id).User.UserStatus;
