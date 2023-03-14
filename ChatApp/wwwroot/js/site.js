@@ -5,7 +5,7 @@ var connection = new signalR.HubConnectionBuilder().withUrl("/chatHub").build();
 //Disable send button until connection is established
 document.getElementById("sendToUser").disabled = true;
 
-connection.on("ReceiveMessage", function (messageServer, date, name) {
+connection.on("ReceiveMessage", function (messageServer, date, name, state) {
     var msg = messageServer.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     var li = `
         <div class="chat-message-left pb-4">
@@ -19,6 +19,7 @@ connection.on("ReceiveMessage", function (messageServer, date, name) {
                         </div>
           </div>`;
     $(".messagesList").append(li);
+    document.getElementById("status-span").innerHTML = state;
 });
 
 connection.start().then(function () {
