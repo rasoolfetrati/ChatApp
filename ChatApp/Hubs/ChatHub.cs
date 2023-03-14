@@ -81,8 +81,8 @@ public class ChatHub : Hub
             await _context.SaveChangesAsync();
             string state = GetUserStatus(getUName);
             //await Groups.AddToGroupAsync(getCurrentUserConnection, getRoom.RoomName);
-            await Clients.Groups(getRoom.RoomName, getCurrentUserConnection, receiverConnectionId).SendAsync("ReceiveMessage", messageServer, DateTime.Now.Date.ToString("dd/MM/yyyy"), getUName, state);
-            // await Clients.Client(receiverConnectionId).SendAsync();
+            //await Clients.Groups(getRoom.RoomName, getCurrentUserConnection, receiverConnectionId).SendAsync("ReceiveMessage", messageServer, DateTime.Now.Date.ToString("dd/MM/yyyy"), getUName, state);
+            await Clients.Client(receiverConnectionId).SendAsync("ReceiveMessage", messageServer, DateTime.Now.Date.ToString("dd/MM/yyyy"), getUName, state);
         }
         else
         {
@@ -121,12 +121,10 @@ public class ChatHub : Hub
     public List<ChatViewModel> GetUserMessages(string id)
     {
         var currentUserConnection = _userService.GetUserConnectionById(int.Parse(Context.UserIdentifier!));
-        //var otherUserConnection = _userService.GetUserConnectionByEmail(id);
         var currentUser = _userService.GetnameByReciverId(int.Parse(Context.UserIdentifier!));
         var getRoom = _context.ConversationRooms.FirstOrDefault(c =>
                        (c.User1 == currentUser && c.User2 == id) ||
                        (c.User1 == id && c.User2 == currentUser));
-        Groups.RemoveFromGroupAsync(currentUserConnection, getRoom.RoomName);
         Groups.AddToGroupAsync(currentUserConnection, getRoom.RoomName);
         List<ChatViewModel> chatViewModels = new List<ChatViewModel>();
         var currentUserId = int.Parse(Context.UserIdentifier!);
